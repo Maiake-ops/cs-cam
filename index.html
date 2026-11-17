@@ -9,15 +9,26 @@
 <title>CS Camera</title>
 <!-- CSS -->
 <style>
-:root{color-scheme:dark;--safe-b:env(safe-area-inset-bottom,0px);--safe-r:env(safe-area-inset-right,0px);--safe-l:env(safe-area-inset-left,0px);--safe-t:env(safe-area-inset-top,0px);--edge:24px;--thumb:240px;--thumb-bottom:276px;--thumb-right:16px;--shutter:72px;--ring:84px;--flip:48px;--strip-thumb:56px;--gap:8px;--panel-radius:16px;--frame-pad:8px;--caption-size:9px;--press:80ms}
+:root{color-scheme:dark;--safe-b:env(safe-area-inset-bottom,0px);--safe-r:env(safe-area-inset-right,0px);--safe-l:env(safe-area-inset-left,0px);--safe-t:env(safe-area-inset-top,0px);--edge:24px;--thumb:240px;--thumb-bottom:276px;--thumb-right:16px;--shutter:72px;--ring:84px;--flip:48px;--strip-thumb:56px;--gap:8px;--panel-radius:16px;--frame-pad:6px;--press:80ms}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,a{font:inherit;-webkit-tap-highlight-color:transparent}button{color:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:default;opacity:.45}button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:5px}[hidden]{display:none!important}.glass{background:rgba(255,255,255,.12);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,255,255,.2);border-radius:var(--panel-radius)}
 #app{position:fixed;inset:0;height:100dvh;overflow:hidden}#video{position:absolute;inset:0;width:100%;height:100dvh;object-fit:cover;transform:scaleX(1)}#video.front{transform:scaleX(-1)}.vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.48),transparent 32%,transparent 80%,rgba(0,0,0,.18))}.brand{position:absolute;top:calc(var(--edge) + var(--safe-t));left:calc(var(--edge) + var(--safe-l));font-size:11px;font-weight:600;letter-spacing:.2em;text-shadow:0 1px 8px #000;pointer-events:none}.brand span{font-weight:400;opacity:.65;letter-spacing:.08em;margin-left:8px}
 #shutter{position:absolute;z-index:5;width:var(--ring);height:var(--ring);padding:4px;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:transparent;left:50%;bottom:calc(var(--edge) + var(--safe-b));transform:translateX(-50%)}#shutter span{display:block;width:var(--shutter);height:var(--shutter);border-radius:50%;background:#fff;transition:transform var(--press)}#shutter.pressed span{transform:scale(.92)}#shutter:disabled{opacity:.65}
 #camera-controls{position:absolute;z-index:8;left:calc(var(--edge) + var(--safe-l));bottom:calc(var(--edge) + var(--safe-b) + (var(--ring) - var(--flip))/2);display:flex;align-items:center;gap:2px}#flip{width:var(--flip);height:var(--flip);border-radius:50%;display:grid;place-items:center;padding:10px}#flip svg{width:26px;height:26px}#chooser{background:none;border:0;width:44px;height:44px;font-size:17px;text-shadow:0 1px 5px #000}#camera-list{position:absolute;left:0;bottom:calc(100% + 12px);width:min(280px,calc(100vw - var(--safe-l) - var(--safe-r) - 48px));max-height:min(264px,calc(100dvh - 160px - var(--safe-t) - var(--safe-b)));overflow:auto;padding:0;box-shadow:0 8px 30px #0006}#camera-list button{display:flex;align-items:center;gap:8px;width:100%;height:44px;padding:0 12px;border:0;background:transparent;text-align:left;font-size:13px}#camera-list button:hover,#camera-list button:focus-visible{background:#ffffff20;outline-offset:-3px}#camera-list .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}#camera-list .check{width:16px}
 #error{position:absolute;z-index:20;top:50%;left:50%;transform:translate(-50%,-50%);width:calc(100vw - 48px);max-width:280px;padding:24px;text-align:center;box-shadow:0 10px 40px #0008}#error p{margin:0 0 18px;font-size:14px;line-height:1.5}.text-button{min-height:44px;padding:10px 18px;border:1px solid #ffffff40;border-radius:12px;background:#ffffff15;color:#fff}#toast{position:absolute;z-index:30;bottom:calc(124px + var(--safe-b));left:50%;transform:translateX(-50%);padding:12px 18px;font-size:13px;white-space:nowrap;pointer-events:none}#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:40}
 #photo-stage{position:absolute;inset:0;pointer-events:none;z-index:3}.flying-photo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden}.flying-photo canvas{display:block;width:100%;height:100%}.photo-glass,.highlight{position:absolute;inset:0;pointer-events:none}.photo-glass{border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px) saturate(1.3);-webkit-backdrop-filter:blur(6px) saturate(1.3)}.highlight{background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
-#card{position:absolute;z-index:4;width:var(--thumb);max-width:calc(100vw - var(--safe-l) - var(--safe-r) - 48px);right:calc(var(--thumb-right) + var(--safe-r));bottom:calc(var(--thumb-bottom) + var(--safe-b));isolation:isolate}#main-photo{display:block;border:0;padding:0;background:none;border-radius:10px;width:100%;min-height:44px;overflow:hidden}#main-photo canvas{display:block;width:100%;height:auto}#paper{position:absolute;z-index:-1;inset:calc(-1 * var(--frame-pad));background:white;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0}#caption{position:absolute;top:100%;left:0;width:100%;max-width:calc(var(--thumb) + 40px);max-height:80px;overflow:auto;padding-top:8px;color:#222;font:var(--caption-size)/1.35 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}#caption p,#light-caption p{margin:0 0 2px}#caption p:first-child,#light-caption p:first-child{font-weight:bold}#outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none}
-#strip{position:absolute;z-index:6;left:calc(16px + var(--safe-l));right:calc(16px + var(--safe-r));bottom:calc(116px + var(--safe-b));display:flex;gap:var(--gap);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;min-height:64px;padding:0;scroll-snap-type:x proximity}#strip button{flex:0 0 auto;min-width:44px;height:64px;padding:4px;border:0;background:#fff;border-radius:7px;scroll-snap-align:end}#strip canvas{display:block;width:auto;height:var(--strip-thumb);max-width:100px;object-fit:contain;border-radius:3px;background:#eee}#strip button[aria-current="true"]{background:#d2e4dc}#exports{position:absolute;z-index:9;right:calc(16px + var(--safe-r));top:calc(12px + var(--safe-t));display:flex;gap:8px}#exports button{min-width:72px;min-height:44px;padding:8px 12px;font-size:12px;font-weight:600}#exports button:disabled{opacity:.55}
+#card{position:absolute;z-index:4;width:var(--thumb);max-width:calc(100vw - var(--safe-l) - var(--safe-r) - 48px);right:calc(var(--thumb-right) + var(--safe-r));bottom:calc(var(--thumb-bottom) + var(--safe-b));isolation:isolate}
+#main-photo{display:block;border:0;padding:0;background:none;border-radius:3px;width:100%;min-height:44px;overflow:hidden}
+#main-photo canvas{display:block;width:100%;height:auto}
+#paper{position:absolute;z-index:-1;inset:calc(-1 * var(--frame-pad));background:#f5f3ee;border:1px solid rgba(255,255,255,.6);border-radius:9px;box-shadow:0 18px 48px rgba(0,0,0,.24),0 2px 8px rgba(0,0,0,.16);opacity:0}
+#caption{position:absolute;top:100%;left:0;width:100%;padding:10px 5px 5px;color:#272b29;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#caption p{margin:0}#caption .print-title{display:flex;align-items:flex-start;gap:12px;font-size:11px;line-height:1.4;font-weight:600;letter-spacing:-.01em}
+.print-title span:first-child{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.print-number{flex:none;color:#858982;font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+#caption .print-date{margin-top:4px;color:#757b75;font:9px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+#light-caption p{margin:0 0 3px}#light-caption p:first-child{font-weight:bold}
+#outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none}
+
+#strip{position:absolute;z-index:6;left:calc(16px + var(--safe-l));right:calc(16px + var(--safe-r));bottom:calc(116px + var(--safe-b));display:flex;gap:var(--gap);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;min-height:64px;padding:0;scroll-snap-type:x proximity}#strip button{flex:0 0 auto;min-width:44px;height:64px;padding:3px;border:1px solid rgba(255,255,255,.35);background:rgba(245,243,238,.7);border-radius:5px;scroll-snap-align:end}#strip canvas{display:block;width:auto;height:var(--strip-thumb);max-width:100px;object-fit:contain;border-radius:2px;background:#242826}#strip button[aria-current="true"]{background:#f5f3ee;border-color:#fff}#exports{position:absolute;z-index:9;right:calc(16px + var(--safe-r));top:calc(12px + var(--safe-t));display:flex;gap:8px}#exports button{min-width:72px;min-height:44px;padding:8px 12px;font-size:12px;font-weight:600}#exports button:disabled{opacity:.55}
 @media(max-width:360px){.brand span{display:none}}
 
 #lightbox{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:calc(52px + var(--safe-t)) calc(4vw + var(--safe-l)) calc(20px + var(--safe-b));border:0;background:rgba(0,0,0,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:white;overflow:auto}#lightbox::backdrop{background:transparent}#light-content{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:100%;justify-content:center;pointer-events:none}#light-photo{max-width:92vw;max-height:80dvh;line-height:0;pointer-events:auto}#light-photo canvas{display:block;width:auto;height:auto;max-width:calc(92vw - var(--safe-l) - var(--safe-r));max-height:80dvh;object-fit:contain;border-radius:3px}#light-caption{font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center;max-width:min(420px,92vw);overflow-wrap:anywhere;pointer-events:auto}#download{pointer-events:auto}#close-lightbox{position:fixed;right:calc(16px + var(--safe-r));top:calc(8px + var(--safe-t));width:44px;height:44px;border-radius:50%;font-size:22px}.filters{position:absolute;width:0;height:0;pointer-events:none}
@@ -32,7 +43,7 @@
   <div class="vignette"></div><div class="brand">CS <span>CAMERA</span></div>
   <div id="photo-stage"></div>
   <section id="card" aria-label="Latest photo" hidden>
-    <div id="paper"></div><button id="main-photo" aria-label="Open latest photo"></button>
+    <div id="paper"></div><button id="main-photo" aria-label="Open latest photo and capture details"></button>
     <svg id="outline" aria-hidden="true"><rect id="outline-rect" x="1" y="1" rx="12" fill="none" stroke="white" stroke-width="1.5" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>
     <div id="caption"></div>
   </section>
@@ -60,8 +71,8 @@
 (function () {
   "use strict";
   const TIME = Object.freeze({press:80, flash:140, sound:40, shrink:900, reduced:300, outline:600, frame:300, caption:250, stagger:60, switch:250, hold:500, toast:2000, collect:240, arrival:650, exportHold:1000, revoke:30000});
-  const SIZE = Object.freeze({thumb:240, top:16, radius:10, outlineRadius:12, frame:8, strip:56, gallery:8, warp:60, blur:6, switchBlur:12, idealWidth:1920, idealHeight:1080});
-  const EXPORT = Object.freeze({photoHeight:360, padding:16, gap:24, margin:32, font:14, lineHeight:20, heading:52, videoWidth:1920, videoHeight:1080, fps:30, bitrate:6000000});
+  const SIZE = Object.freeze({thumb:240, top:16, radius:3, outlineRadius:5, frame:6, strip:56, gallery:8, warp:60, blur:6, switchBlur:12, idealWidth:1920, idealHeight:1080});
+  const EXPORT = Object.freeze({photoHeight:360, padding:12, gap:24, margin:32, font:12, titleFont:16, lineHeight:20, captionGap:16, columnGap:24, radius:10, photoRadius:4, heading:52, videoWidth:1920, videoHeight:1080, fps:30, bitrate:6000000});
   const AUDIO = Object.freeze({bandpass:1800, click:90, gain:.25});
   const $ = function (id) { return document.getElementById(id); };
   const video = $("video"), shutter = $("shutter"), flip = $("flip"), chooser = $("chooser"), menu = $("camera-list"), card = $("card"), lightbox = $("lightbox");
@@ -69,7 +80,7 @@
   const DEFAULT_VIDEO = {facingMode:{ideal:"environment"}, width:{ideal:SIZE.idealWidth}, height:{ideal:SIZE.idealHeight}};
   let stream = null, deviceId = "", facing = "environment", request = 0, enumeration = 0;
   let switching = false, capturing = false, exporting = false, devices = [], current = null, photos = [], selected = null;
-  let audio = null, toastTimer = 0, holdTimer = 0, held = false, lightTrigger = null;
+  let audio = null, toastTimer = 0, holdTimer = 0, held = false, lightTrigger = null, shotNumber = 0;
   let deviceName = parsedDeviceName();
 
   function parsedDeviceName() {
@@ -269,11 +280,17 @@
       const aperture = Number(settings.aperture || settings.fNumber), iso = Number(settings.iso), exposure = Number(settings.exposureTime);
       const estimated = !(aperture > 0 && iso > 0 && exposure > 0);
       photo.lines[photo.lines.length-1] = "f/"+(aperture > 0 ? aperture : "1.8")+" · ISO "+(iso > 0 ? iso : 100)+" · "+(exposure > 0 ? (exposure < 1 ? "1/"+Math.round(1/exposure) : exposure) : "1/120")+"s"+(estimated ? " (est.)" : "");
-      if (current === photo && $("caption").lastElementChild) { $("caption").lastElementChild.textContent = photo.lines.at(-1); fitPaper(); }
       if (selected === photo) setCaption($("light-caption"), photo.lines);
     } catch {}
   }
   function setCaption(element, lines) { element.replaceChildren(...lines.map(function (line) { const p = document.createElement("p"); p.textContent = line; return p; })); }
+  function setPrintCaption(photo) {
+    const title = document.createElement("p"), label = document.createElement("span"), number = document.createElement("span"), date = document.createElement("p");
+    title.className = "print-title"; label.textContent = photo.label || "Photograph"; label.title = label.textContent;
+    number.className = "print-number"; number.textContent = pad(photo.number); title.append(label,number);
+    date.className = "print-date"; date.textContent = timeCaption(photo.date);
+    $("caption").replaceChildren(title,date);
+  }
   function layoutPhoto(photo) {
     card.style.width = "";
     const style = getComputedStyle(card), ratio = photo.canvas.width / photo.canvas.height;
@@ -327,7 +344,7 @@
       });
     } finally { flyer.remove(); photo.canvas.style.removeProperty("filter"); }
     $("main-photo").replaceChildren(photo.canvas); card.style.visibility = "visible";
-    setCaption($("caption"), photo.lines);
+    setPrintCaption(photo);
     Array.from($("caption").children).forEach(function (line) { line.style.opacity = "0"; });
     fitPaper();
   }
@@ -351,7 +368,7 @@
       context.drawImage(video,0,0,canvas.width,canvas.height);
       const lines = [deviceName]; if (track.label) lines.push(track.label);
       lines.push(timeCaption(date),(settings.width || canvas.width)+"×"+(settings.height || canvas.height)+" · "+(settings.frameRate ? Number(settings.frameRate.toFixed(2)) : "?")+"fps · "+(front ? "front" : "rear"),"f/1.8 · ISO 100 · 1/120s (est.)");
-      const photo = {canvas,date,lines};
+      const photo = {canvas,date,lines,label:track.label,number:++shotNumber};
       current = photo;
       $("caption").replaceChildren(); $("paper").style.opacity = "0"; $("outline").hidden = true;
       void exposureCaption(track, photo);
@@ -393,29 +410,33 @@
   function rowLayout(items) {
     const context = document.createElement("canvas").getContext("2d");
     let x = EXPORT.margin, lineCount = 0;
+    function wrap(text, width, title = false) {
+      const lines = [], size = title ? EXPORT.titleFont : EXPORT.font;
+      context.font = (title ? "600 " : "")+size+"px Arial, sans-serif";
+      let line = "";
+      for (const character of text) {
+        if (line && context.measureText(line+character).width > width) { lines.push({text:line,title}); line = ""; }
+        line += character;
+      }
+      lines.push({text:line,title}); return lines;
+    }
     const entries = items.map(function (photo) {
-      const width = Math.round(EXPORT.photoHeight*photo.canvas.width/photo.canvas.height), lines = [];
-      photo.lines.forEach(function (text,index) {
-        context.font = (index ? "" : "bold ")+EXPORT.font+"px monospace";
-        let line = "";
-        for (const character of text) {
-          if (line && context.measureText(line+character).width > width) { lines.push({text:line,bold:index === 0}); line = ""; }
-          line += character;
-        }
-        lines.push({text:line,bold:index === 0});
-      });
-      const entry = {photo,lines,x,width:width+EXPORT.padding*2};
-      x += entry.width+EXPORT.gap; lineCount = Math.max(lineCount,lines.length); return entry;
+      const width = Math.round(EXPORT.photoHeight*photo.canvas.width/photo.canvas.height), columnWidth = (width-EXPORT.columnGap)/2;
+      const left = [...wrap(pad(photo.number)+" / "+(photo.label || "Photograph"),columnWidth,true),...wrap(timeCaption(photo.date),columnWidth)];
+      const right = [photo.lines[0],...photo.lines.slice(-2)].flatMap(function (text) { return wrap(text,columnWidth); });
+      const entry = {photo,left,right,columnWidth,x,width:width+EXPORT.padding*2};
+      x += entry.width+EXPORT.gap; lineCount = Math.max(lineCount,left.length,right.length); return entry;
     });
-    const cardHeight = EXPORT.photoHeight+EXPORT.padding*2+lineCount*EXPORT.lineHeight;
+    const cardHeight = EXPORT.photoHeight+EXPORT.padding*2+EXPORT.captionGap+lineCount*EXPORT.lineHeight;
     return {entries,cardHeight,width:x-EXPORT.gap+EXPORT.margin,height:EXPORT.heading+EXPORT.margin*2+cardHeight};
   }
   function drawRow(canvas, layout, elapsed = Infinity) {
     const context = canvas.getContext("2d"), scale = canvas.width/layout.width;
-    context.fillStyle = "#141716"; context.fillRect(0,0,canvas.width,canvas.height);
+    context.fillStyle = "#191c1a"; context.fillRect(0,0,canvas.width,canvas.height);
     context.save(); context.scale(scale,scale);
-    context.fillStyle = "#c8d6ce"; context.font = "bold 16px monospace";
-    context.fillText("CS CAMERA / "+pad(layout.entries.length)+" FRAMES",EXPORT.margin,EXPORT.margin);
+    context.fillStyle = "#b2b9b3"; context.font = "12px Arial, sans-serif";
+    context.fillText("CS / COLLECTION",EXPORT.margin,EXPORT.margin);
+    context.textAlign = "right"; context.fillText(pad(layout.entries.length)+" PHOTOGRAPHS",layout.width-EXPORT.margin,EXPORT.margin); context.textAlign = "left";
     layout.entries.forEach(function (entry,index) {
       const t = Math.max(0,Math.min(1,(elapsed-index*TIME.arrival)/TIME.arrival));
       if (!t) return;
@@ -424,14 +445,18 @@
       context.translate(entry.x+entry.width/2,EXPORT.heading+EXPORT.margin+lift);
       if (!reduced.matches) context.rotate(-.04*Math.pow(1-t,2));
       context.translate(-entry.width/2,0);
-      context.shadowColor = "rgba(0,0,0,.35)"; context.shadowBlur = 16; context.shadowOffsetY = 8;
-      context.fillStyle = "#fff"; context.fillRect(0,0,entry.width,layout.cardHeight);
+      context.shadowColor = "rgba(0,0,0,.24)"; context.shadowBlur = 16; context.shadowOffsetY = 8;
+      context.fillStyle = "#f5f3ee"; context.beginPath(); context.roundRect(0,0,entry.width,layout.cardHeight,EXPORT.radius); context.fill();
       context.shadowColor = "transparent";
+      context.save(); context.beginPath(); context.roundRect(EXPORT.padding,EXPORT.padding,entry.width-EXPORT.padding*2,EXPORT.photoHeight,EXPORT.photoRadius); context.clip();
       context.drawImage(entry.photo.canvas,EXPORT.padding,EXPORT.padding,entry.width-EXPORT.padding*2,EXPORT.photoHeight);
-      context.fillStyle = "#222"; context.textBaseline = "top";
-      entry.lines.forEach(function (line,i) {
-        context.font = (line.bold ? "bold " : "")+EXPORT.font+"px monospace";
-        context.fillText(line.text,EXPORT.padding,EXPORT.photoHeight+EXPORT.padding+EXPORT.lineHeight*i);
+      context.restore(); context.textBaseline = "top";
+      [entry.left,entry.right].forEach(function (lines,column) {
+        lines.forEach(function (line,i) {
+          context.fillStyle = line.title ? "#272b29" : "#757b75";
+          context.font = (line.title ? "600 " : "")+(line.title ? EXPORT.titleFont : EXPORT.font)+"px Arial, sans-serif";
+          context.fillText(line.text,EXPORT.padding+column*(entry.columnWidth+EXPORT.columnGap),EXPORT.photoHeight+EXPORT.padding+EXPORT.captionGap+EXPORT.lineHeight*i);
+        });
       });
       context.restore();
     });
