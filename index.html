@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+<title>CS Camera</title>
+<!-- CSS -->
+<style>
+:root{color-scheme:dark;--safe-b:env(safe-area-inset-bottom,0px);--safe-r:env(safe-area-inset-right,0px);--safe-l:env(safe-area-inset-left,0px);--safe-t:env(safe-area-inset-top,0px);--edge:24px;--thumb:240px;--thumb-bottom:200px;--thumb-right:16px;--shutter:72px;--ring:84px;--flip:48px;--strip-thumb:40px;--gap:8px;--panel-radius:16px;--frame-pad:8px;--caption-size:9px;--press:80ms}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,a{font:inherit;-webkit-tap-highlight-color:transparent}button{color:inherit;cursor:pointer;touch-action:manipulation}button:disabled{cursor:default;opacity:.45}button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:5px}[hidden]{display:none!important}.glass{background:rgba(255,255,255,.12);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,255,255,.2);border-radius:var(--panel-radius)}
+#app{position:fixed;inset:0;height:100dvh;overflow:hidden}#video{position:absolute;inset:0;width:100%;height:100dvh;object-fit:cover;transform:scaleX(1)}#video.front{transform:scaleX(-1)}.vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.48),transparent 32%,transparent 80%,rgba(0,0,0,.18))}.brand{position:absolute;top:calc(var(--edge) + var(--safe-t));left:calc(var(--edge) + var(--safe-l));font-size:11px;font-weight:600;letter-spacing:.2em;text-shadow:0 1px 8px #000;pointer-events:none}.brand span{font-weight:400;opacity:.65;letter-spacing:.08em;margin-left:8px}
+#shutter{position:absolute;z-index:5;width:var(--ring);height:var(--ring);padding:4px;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:transparent;left:50%;bottom:calc(var(--edge) + var(--safe-b));transform:translateX(-50%)}#shutter span{display:block;width:var(--shutter);height:var(--shutter);border-radius:50%;background:#fff;transition:transform var(--press)}#shutter.pressed span{transform:scale(.92)}#shutter:disabled{opacity:.65}
+#camera-controls{position:absolute;z-index:8;left:calc(var(--edge) + var(--safe-l));bottom:calc(var(--edge) + var(--safe-b) + (var(--ring) - var(--flip))/2);display:flex;align-items:center;gap:2px}#flip{width:var(--flip);height:var(--flip);border-radius:50%;display:grid;place-items:center;padding:10px}#flip svg{width:26px;height:26px}#chooser{background:none;border:0;width:44px;height:44px;font-size:17px;text-shadow:0 1px 5px #000}#camera-list{position:absolute;left:0;bottom:calc(100% + 12px);width:min(280px,calc(100vw - var(--safe-l) - var(--safe-r) - 48px));max-height:min(264px,calc(100dvh - 160px - var(--safe-t) - var(--safe-b)));overflow:auto;padding:0;box-shadow:0 8px 30px #0006}#camera-list button{display:flex;align-items:center;gap:8px;width:100%;height:44px;padding:0 12px;border:0;background:transparent;text-align:left;font-size:13px}#camera-list button:hover,#camera-list button:focus-visible{background:#ffffff20;outline-offset:-3px}#camera-list .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}#camera-list .check{width:16px}
+#error{position:absolute;z-index:20;top:50%;left:50%;transform:translate(-50%,-50%);width:calc(100vw - 48px);max-width:280px;padding:24px;text-align:center;box-shadow:0 10px 40px #0008}#error p{margin:0 0 18px;font-size:14px;line-height:1.5}.text-button{min-height:44px;padding:10px 18px;border:1px solid #ffffff40;border-radius:12px;background:#ffffff15;color:#fff}#toast{position:absolute;z-index:30;bottom:calc(124px + var(--safe-b));left:50%;transform:translateX(-50%);padding:12px 18px;font-size:13px;white-space:nowrap;pointer-events:none}#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:40}
+#photo-stage{position:absolute;inset:0;pointer-events:none;z-index:3}.flying-photo{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;overflow:hidden}.flying-photo canvas{display:block;width:100%;height:100%}.photo-glass,.highlight{position:absolute;inset:0;pointer-events:none}.photo-glass{border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px) saturate(1.3);-webkit-backdrop-filter:blur(6px) saturate(1.3)}.highlight{background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
+#card{position:absolute;z-index:4;width:var(--thumb);max-width:calc(100vw - var(--safe-l) - var(--safe-r) - 48px);right:calc(var(--thumb-right) + var(--safe-r));bottom:calc(var(--thumb-bottom) + var(--safe-b));isolation:isolate}#main-photo{display:block;border:0;padding:0;background:none;border-radius:10px;width:100%;min-height:44px;overflow:hidden}#main-photo canvas{display:block;width:100%;height:auto}#paper{position:absolute;z-index:-1;inset:calc(-1 * var(--frame-pad));background:white;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0}#caption{position:absolute;top:100%;left:0;width:100%;max-width:calc(var(--thumb) + 40px);max-height:80px;overflow:auto;padding-top:8px;color:#222;font:var(--caption-size)/1.35 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}#caption p,#light-caption p{margin:0 0 2px}#caption p:first-child,#light-caption p:first-child{font-weight:bold}#outline{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);overflow:visible;pointer-events:none}
+#strip{position:absolute;z-index:6;left:calc(16px + var(--safe-l));right:calc(var(--thumb) + 32px + var(--safe-r));bottom:calc(116px + var(--safe-b));display:flex;justify-content:flex-start;gap:calc(var(--gap) - 4px);overflow-x:auto;scrollbar-width:none;min-height:44px}#strip button{flex:0 0 44px;width:44px;height:44px;padding:2px;border:0;background:none;border-radius:7px}#strip canvas{display:block;width:var(--strip-thumb);height:var(--strip-thumb);object-fit:cover;border-radius:5px;border:1px solid #ffffff60}
+#lightbox{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:calc(52px + var(--safe-t)) calc(4vw + var(--safe-l)) calc(20px + var(--safe-b));border:0;background:rgba(0,0,0,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:white;overflow:auto}#lightbox::backdrop{background:transparent}#light-content{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:100%;justify-content:center;pointer-events:none}#light-photo{max-width:92vw;max-height:80dvh;line-height:0;pointer-events:auto}#light-photo canvas{display:block;width:auto;height:auto;max-width:calc(92vw - var(--safe-l) - var(--safe-r));max-height:80dvh;object-fit:contain;border-radius:3px}#light-caption{font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:center;max-width:min(420px,92vw);overflow-wrap:anywhere;pointer-events:auto}#download{pointer-events:auto}#close-lightbox{position:fixed;right:calc(16px + var(--safe-r));top:calc(8px + var(--safe-t));width:44px;height:44px;border-radius:50%;font-size:22px}.filters{position:absolute;width:0;height:0;pointer-events:none}
+@media(orientation:landscape){:root{--thumb-bottom:150px}#card{right:calc(128px + var(--safe-r));max-width:calc(100vw - var(--safe-l) - var(--safe-r) - 216px)}#shutter{left:auto;right:calc(var(--edge) + var(--safe-r));bottom:auto;top:50%;transform:translateY(-50%)}#camera-controls{bottom:auto;top:50%;transform:translateY(-50%)}#camera-list{max-height:calc(50dvh - 44px - var(--safe-t))}#strip{left:calc(88px + var(--safe-l));right:calc(128px + var(--safe-r));bottom:calc(24px + var(--safe-b))}}
+@media(prefers-reduced-motion:reduce){#shutter span{transition:none}.flying-photo{will-change:auto}}
+</style>
+</head>
+<!-- HTML -->
+<body>
+<main id="app" aria-label="Camera">
+  <video id="video" autoplay muted playsinline aria-label="Live camera preview"></video>
+  <div class="vignette"></div><div class="brand">CS <span>CAMERA</span></div>
+  <div id="photo-stage"></div>
+  <section id="card" aria-label="Latest photo" hidden>
+    <div id="paper"></div><button id="main-photo" aria-label="Open latest photo"></button>
+    <svg id="outline" aria-hidden="true"><rect id="outline-rect" x="1" y="1" rx="12" fill="none" stroke="white" stroke-width="1.5" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>
+    <div id="caption"></div>
+  </section>
+  <nav id="strip" aria-label="Earlier photos"></nav>
+  <div id="camera-controls" hidden>
+    <button id="flip" class="glass" aria-label="Flip camera; hold to choose a lens" aria-haspopup="menu" aria-expanded="false">
+      <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11a9.5 9.5 0 0 1 16-4l3 3M24 4v6h-6M23 17a9.5 9.5 0 0 1-16 4l-3-3M4 24v-6h6"/></svg>
+    </button>
+    <button id="chooser" aria-label="Choose camera" aria-haspopup="menu" aria-expanded="false">▾</button>
+    <div id="camera-list" class="glass" role="menu" aria-label="Available cameras" hidden></div>
+  </div>
+  <button id="shutter" aria-label="Take photo (Space)" disabled><span></span></button>
+  <section id="error" class="glass" role="alert" hidden><p id="error-message"></p><button id="retry" class="text-button">Retry</button></section>
+  <div id="toast" class="glass" role="status" hidden></div>
+</main>
+<div id="flash"></div>
+<dialog id="lightbox" aria-label="Photo viewer">
+  <button id="close-lightbox" class="glass" aria-label="Close photo">✕</button>
+  <div id="light-content"><div id="light-photo"></div><div id="light-caption"></div><button id="download" class="text-button">Download PNG</button></div>
+</dialog>
+<svg class="filters" aria-hidden="true"><defs><filter id="warp" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence id="noise" type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="1" result="noise"/><feDisplacementMap id="displacement" in="SourceGraphic" in2="noise" scale="60" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
+<!-- JS -->
+<script>
+(function () {
+  "use strict";
+  const TIME = Object.freeze({press:80, flash:140, sound:40, shrink:900, reduced:300, outline:600, frame:300, caption:250, stagger:60, switch:250, hold:500, toast:2000});
+  const SIZE = Object.freeze({thumb:240, top:16, radius:10, outlineRadius:12, frame:8, strip:40, gallery:8, warp:60, blur:6, switchBlur:12, idealWidth:1920, idealHeight:1080});
+  const AUDIO = Object.freeze({bandpass:1800, click:90, gain:.25});
+  const $ = function (id) { return document.getElementById(id); };
+  const video = $("video"), shutter = $("shutter"), flip = $("flip"), chooser = $("chooser"), menu = $("camera-list"), card = $("card"), lightbox = $("lightbox");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const DEFAULT_VIDEO = {facingMode:{ideal:"environment"}, width:{ideal:SIZE.idealWidth}, height:{ideal:SIZE.idealHeight}};
+  let stream = null, deviceId = "", facing = "environment", request = 0, enumeration = 0;
+  let switching = false, capturing = false, devices = [], current = null, history = [], selected = null;
+  let audio = null, toastTimer = 0, holdTimer = 0, held = false, lightTrigger = null;
+  let deviceName = parsedDeviceName();
+
+  function parsedDeviceName() {
+    const ua = navigator.userAgent || "";
+    const android = ua.match(/Android[^;)]*;\s*(?:[a-z]{2}-[A-Z]{2};\s*)?([^;)]+)/i);
+    if (android) return android[1].replace(/\s+Build\/.*/, "").trim() || "Android";
+    if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "iPad";
+    if (/iPhone/.test(ua)) return "iPhone";
+    if (/Macintosh/.test(ua)) return "Mac";
+    if (/Windows/.test(ua)) return "Windows PC";
+    if (/Linux/.test(ua)) return "Linux device";
+    return "Unknown Device";
+  }
+  async function resolveDeviceName() {
+    const data = navigator.userAgentData;
+    if (!data) return;
+    let model = data.model || "";
+    try { if (data.getHighEntropyValues) model = (await data.getHighEntropyValues(["model"])).model || model; } catch {}
+    const brands = (data.brands || []).map(function (brand) { return brand.brand; }).filter(function (brand) { return !/not.?a.?brand/i.test(brand); });
+    deviceName = [model, data.platform, brands.join(" / ")].filter(Boolean).join(" · ") || parsedDeviceName();
+  }
+  function stopTracks(target) { if (target) target.getTracks().forEach(function (track) { track.stop(); }); }
+  function isFront(track) {
+    const mode = track.getSettings().facingMode;
+    return mode ? mode === "user" : /front|user|selfie|facetime/i.test(track.label || "");
+  }
+  function updateLocks() {
+    shutter.disabled = switching || capturing || !stream || video.readyState < 2 || document.hidden;
+    flip.disabled = chooser.disabled = switching || capturing;
+    $("retry").disabled = switching;
+  }
+  function showError(error) {
+    const messages = {NotAllowedError:"Camera permission was denied.", NotFoundError:"No camera was found.", InsecureContext:"Open this page over HTTPS to use the camera."};
+    $("error-message").textContent = messages[error.name] || "Could not start the camera. Please retry.";
+    $("error").hidden = false;
+  }
+  function toast(message) {
+    clearTimeout(toastTimer); $("toast").textContent = message; $("toast").hidden = false;
+    toastTimer = setTimeout(function () { $("toast").hidden = true; }, TIME.toast);
+  }
+  async function animate(element, frames, duration, options = {}) {
+    const animation = element.animate(frames, {duration, fill:"forwards", ...options});
+    try { await animation.finished; } catch {}
+    if (animation.playState === "finished") animation.commitStyles();
+    animation.cancel();
+  }
+  async function refreshDevices() {
+    const id = ++enumeration;
+    try {
+      const found = await navigator.mediaDevices.enumerateDevices();
+      if (id !== enumeration) return;
+      devices = found.filter(function (device) { return device.kind === "videoinput"; });
+      $("camera-controls").hidden = devices.length < 2;
+      renderMenu();
+    } catch { closeMenu(); }
+  }
+  async function openStream(spec, id) {
+    const next = await navigator.mediaDevices.getUserMedia({video:spec, audio:false});
+    if (id !== request || document.hidden) { stopTracks(next); return null; }
+    return next;
+  }
+  async function startCamera(spec, switchingCamera = false) {
+    const id = ++request, previous = deviceId;
+    switching = true; closeMenu(); updateLocks(); $("error").hidden = true;
+    stopTracks(stream); stream = null;
+    let next = null;
+    try {
+      if (!window.isSecureContext) throw {name:"InsecureContext"};
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw {name:"NotFoundError"};
+      video.getAnimations().forEach(function (animation) { animation.cancel(); });
+      video.style.filter = reduced.matches ? "none" : "blur(" + SIZE.switchBlur + "px)";
+      await animate(video, [{opacity:1},{opacity:.2}], TIME.switch / 2);
+      if (id !== request || document.hidden) return;
+      try {
+        next = await openStream(spec, id);
+      } catch (error) {
+        if (id !== request) return;
+        if (spec.facingMode && spec.facingMode.exact && error.name === "OverconstrainedError") {
+          try { next = await openStream({facingMode:{ideal:spec.facingMode.exact}}, id); }
+          catch (fallbackError) { if (id === request) throw fallbackError; }
+        } else if (!switchingCamera && spec.deviceId) {
+          next = await openStream(DEFAULT_VIDEO, id);
+        } else throw error;
+      }
+    } catch (error) {
+      if (id !== request) return;
+      if (switchingCamera && previous) {
+        toast("Camera unavailable");
+        try { next = await openStream({deviceId:{exact:previous}}, id); }
+        catch (restoreError) { if (id === request) showError(restoreError); }
+      } else showError(error);
+    } finally {
+      if (id === request) {
+        try {
+          if (next) {
+            stream = next; video.srcObject = next;
+            const track = next.getVideoTracks()[0];
+            deviceId = track.getSettings().deviceId || previous;
+            facing = isFront(track) ? "user" : "environment";
+            video.classList.toggle("front", facing === "user");
+            await video.play();
+            if (id === request) {
+              track.addEventListener("ended", function () {
+                if (stream === next && !document.hidden) { stopTracks(stream); stream = null; updateLocks(); showError({name:"NotFoundError"}); }
+              });
+              void refreshDevices();
+            }
+          }
+        } catch (error) {
+          if (id === request) { stopTracks(next); stream = null; showError(error); }
+        } finally {
+          if (id === request) {
+            video.style.filter = "none";
+            await animate(video, [{opacity:.2},{opacity:1}], TIME.switch / 2);
+            if (id === request) { switching = false; updateLocks(); }
+          } else stopTracks(next);
+        }
+      } else stopTracks(next);
+    }
+  }
+  function restartCamera() { return startCamera(deviceId ? {deviceId:{exact:deviceId}} : DEFAULT_VIDEO); }
+  function flipCamera() {
+    if (switching || capturing) return;
+    void startCamera({facingMode:{exact:facing === "user" ? "environment" : "user"}}, true);
+  }
+  function renderMenu() {
+    menu.replaceChildren();
+    devices.forEach(function (device, index) {
+      const button = document.createElement("button"), label = document.createElement("span"), check = document.createElement("span");
+      button.type = "button"; button.setAttribute("role", "menuitemradio"); button.setAttribute("aria-checked", String(device.deviceId === deviceId));
+      label.className = "name"; label.textContent = device.label || "Camera " + (index + 1);
+      check.className = "check"; check.textContent = device.deviceId === deviceId ? "✓" : ""; check.setAttribute("aria-hidden", "true");
+      button.append(check, label);
+      button.addEventListener("click", function () { if (!switching && !capturing) { closeMenu(); flip.focus(); void startCamera({deviceId:{exact:device.deviceId}}, true); } });
+      menu.append(button);
+    });
+  }
+  function closeMenu() { menu.hidden = true; flip.setAttribute("aria-expanded", "false"); chooser.setAttribute("aria-expanded", "false"); }
+  function toggleMenu() {
+    if (switching || capturing) return;
+    menu.hidden = !menu.hidden;
+    [flip,chooser].forEach(function (button) { button.setAttribute("aria-expanded", String(!menu.hidden)); });
+    if (!menu.hidden) (menu.querySelector('[aria-checked="true"]') || menu.firstElementChild)?.focus();
+  }
+  function initializeAudio() {
+    try { if (!audio) { const Context = window.AudioContext || window.webkitAudioContext; if (Context) audio = new Context(); } if (audio && audio.state === "suspended") void audio.resume().catch(function () {}); } catch {}
+  }
+  function shutterSound() {
+    if (!audio || audio.state !== "running") return;
+    const duration = TIME.sound / 1000, now = audio.currentTime;
+    const buffer = audio.createBuffer(1, Math.ceil(audio.sampleRate * duration), audio.sampleRate), values = buffer.getChannelData(0);
+    for (let i = 0; i < values.length; i++) values[i] = Math.random() * 2 - 1;
+    const noise = audio.createBufferSource(), filter = audio.createBiquadFilter(), click = audio.createOscillator(), gain = audio.createGain();
+    noise.buffer = buffer; filter.type = "bandpass"; filter.frequency.value = AUDIO.bandpass; click.frequency.value = AUDIO.click;
+    gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(AUDIO.gain, now + .002); gain.gain.exponentialRampToValueAtTime(.001, now + duration);
+    noise.connect(filter); filter.connect(gain); click.connect(gain); gain.connect(audio.destination);
+    noise.start(now); click.start(now); noise.stop(now + duration); click.stop(now + duration);
+    click.onended = function () { noise.disconnect(); filter.disconnect(); click.disconnect(); gain.disconnect(); };
+  }
+  function bezier(progress) {
+    const x1 = .34, y1 = 1.56, x2 = .64, y2 = 1;
+    function coordinate(t, a, b) { return 3*(1-t)*(1-t)*t*a + 3*(1-t)*t*t*b + t*t*t; }
+    if (progress <= 0 || progress >= 1) return progress;
+    let low = 0, high = 1, u = progress;
+    for (let i = 0; i < 20; i++) { u = (low + high)/2; if (coordinate(u,x1,x2) < progress) low = u; else high = u; }
+    return coordinate(u,y1,y2);
+  }
+  function runFrames(duration, draw) {
+    return new Promise(function (resolve, reject) {
+      let start;
+      function frame(now) {
+        try { if (start === undefined) start = now; const t = Math.min(1,(now-start)/duration); draw(t); if (t < 1) requestAnimationFrame(frame); else resolve(); }
+        catch (error) { reject(error); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function pad(value) { return String(value).padStart(2,"0"); }
+  function timeCaption(date) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return date.getDate()+" "+months[date.getMonth()]+" "+date.getFullYear()+" · "+pad(date.getHours())+":"+pad(date.getMinutes())+":"+pad(date.getSeconds());
+  }
+  function fileName(date) { return "photo-"+date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate())+"-"+pad(date.getHours())+pad(date.getMinutes())+pad(date.getSeconds())+".png"; }
+  async function exposureCaption(track, photo) {
+    try {
+      if (!window.ImageCapture) return;
+      const settings = await new ImageCapture(track).getPhotoSettings();
+      const aperture = Number(settings.aperture || settings.fNumber), iso = Number(settings.iso), exposure = Number(settings.exposureTime);
+      const estimated = !(aperture > 0 && iso > 0 && exposure > 0);
+      photo.lines[photo.lines.length-1] = "f/"+(aperture > 0 ? aperture : "1.8")+" · ISO "+(iso > 0 ? iso : 100)+" · "+(exposure > 0 ? (exposure < 1 ? "1/"+Math.round(1/exposure) : exposure) : "1/120")+"s"+(estimated ? " (est.)" : "");
+      if (current === photo && $("caption").lastElementChild) { $("caption").lastElementChild.textContent = photo.lines.at(-1); fitPaper(); }
+      if (selected === photo) setCaption($("light-caption"), photo.lines);
+    } catch {}
+  }
+  function setCaption(element, lines) { element.replaceChildren(...lines.map(function (line) { const p = document.createElement("p"); p.textContent = line; return p; })); }
+  function layoutPhoto(photo) {
+    card.style.width = "";
+    const style = getComputedStyle(card), ratio = photo.canvas.width / photo.canvas.height;
+    const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safe-t")) || 0;
+    const availableHeight = $("app").clientHeight - parseFloat(style.bottom) - safeTop - SIZE.top;
+    const width = Math.min(SIZE.thumb, card.clientWidth, Math.max(44, availableHeight * ratio));
+    card.style.width = width + "px"; card.style.height = width / ratio + "px";
+  }
+  function fitPaper() { $("paper").style.bottom = -(Math.min($("caption").scrollHeight, $("caption").clientHeight)+SIZE.frame)+"px"; }
+  function addHistory(photo) {
+    history.push(photo); if (history.length > SIZE.gallery) history.shift();
+    $("strip").replaceChildren(...history.map(function (item) {
+      const button = document.createElement("button"), thumb = document.createElement("canvas");
+      thumb.width = thumb.height = SIZE.strip * 2;
+      const side = Math.min(item.canvas.width,item.canvas.height);
+      thumb.getContext("2d").drawImage(item.canvas,(item.canvas.width-side)/2,(item.canvas.height-side)/2,side,side,0,0,thumb.width,thumb.height);
+      button.setAttribute("aria-label", "Open photo, "+timeCaption(item.date)); button.append(thumb);
+      button.addEventListener("click", function () { openLightbox(item, button); }); return button;
+    }));
+    $("strip").scrollLeft = $("strip").scrollWidth;
+  }
+  async function shrinkPhoto(photo) {
+    const noMotion = reduced.matches, view = $("app").getBoundingClientRect();
+    const cover = Math.max(view.width/photo.canvas.width,view.height/photo.canvas.height), width = photo.canvas.width*cover, height = photo.canvas.height*cover;
+    const flyer = document.createElement("div"), glass = document.createElement("div"), highlight = document.createElement("div");
+    flyer.className = "flying-photo"; flyer.style.width = width+"px"; flyer.style.height = height+"px"; flyer.append(photo.canvas);
+    if (!noMotion) {
+      glass.className = "photo-glass"; highlight.className = "highlight"; glass.append(highlight); flyer.append(glass);
+      $("noise").setAttribute("seed", String(Math.floor(Math.random()*10000)));
+      photo.canvas.style.filter = "url(#warp)";
+    }
+    $("photo-stage").append(flyer);
+    card.hidden = false; card.style.visibility = "hidden"; layoutPhoto(photo);
+    const target = card.getBoundingClientRect(), startX = (view.width-width)/2, startY = (view.height-height)/2, endScale = target.width/width;
+    try {
+      await runFrames(noMotion ? TIME.reduced : TIME.shrink, function (t) {
+        const eased = noMotion ? 1-Math.pow(1-t,3) : bezier(t), scale = Math.exp(Math.log(endScale)*eased);
+        const x = startX+(target.left-startX)*eased, y = startY+(target.top-startY)*eased;
+        flyer.style.transform = "translate("+x+"px,"+y+"px) scale("+scale+")";
+        flyer.style.borderRadius = SIZE.radius*t/Math.max(.01,scale)+"px";
+        if (!noMotion) {
+          $("displacement").setAttribute("scale", String(SIZE.warp*Math.pow(1-t,1.5)));
+          const blur = SIZE.blur*Math.max(0,1-t/.8);
+          glass.style.backdropFilter = glass.style.webkitBackdropFilter = "blur("+blur+"px) saturate("+(1+.3*(1-t))+")";
+          glass.style.borderWidth = 1/Math.max(.01,scale)+"px";
+          highlight.style.transform = "translateX("+(-100+200*t)+"%)";
+        }
+        if (t === 1) { photo.canvas.style.removeProperty("filter"); photo.canvas.removeAttribute("filter"); }
+      });
+    } finally { flyer.remove(); photo.canvas.style.removeProperty("filter"); }
+    $("main-photo").replaceChildren(photo.canvas); card.style.visibility = "visible";
+    setCaption($("caption"), photo.lines);
+    Array.from($("caption").children).forEach(function (line) { line.style.opacity = "0"; });
+    fitPaper();
+  }
+  async function framePhoto() {
+    const outline = $("outline-rect");
+    outline.setAttribute("width", card.clientWidth+2); outline.setAttribute("height", card.offsetHeight+2); outline.setAttribute("rx", SIZE.outlineRadius);
+    $("outline").hidden = false;
+    await runFrames(TIME.outline, function (t) { outline.setAttribute("stroke-dashoffset", String(Math.pow(1-t,3))); });
+    const lines = Array.from($("caption").children);
+    await Promise.all([animate($("paper"), [{opacity:0},{opacity:1}], TIME.frame, {easing:"ease-out"}), ...lines.map(function (line,index) { return animate(line,[{opacity:0},{opacity:1}],TIME.caption,{delay:index*TIME.stagger,easing:"ease-out"}); })]);
+    $("outline").hidden = true;
+  }
+  async function capture() {
+    if (shutter.disabled || !stream || !video.videoWidth || lightbox.open) return;
+    initializeAudio(); capturing = true; closeMenu(); updateLocks();
+    const track = stream.getVideoTracks()[0], settings = {...track.getSettings()}, date = new Date(), front = isFront(track);
+    const canvas = document.createElement("canvas"); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    try {
+      const context = canvas.getContext("2d");
+      if (front) { context.translate(canvas.width,0); context.scale(-1,1); }
+      context.drawImage(video,0,0,canvas.width,canvas.height);
+      const lines = [deviceName]; if (track.label) lines.push(track.label);
+      lines.push(timeCaption(date),(settings.width || canvas.width)+"×"+(settings.height || canvas.height)+" · "+(settings.frameRate ? Number(settings.frameRate.toFixed(2)) : "?")+"fps · "+(front ? "front" : "rear"),"f/1.8 · ISO 100 · 1/120s (est.)");
+      const photo = {canvas,date,lines};
+      if (current) addHistory(current); current = photo;
+      $("caption").replaceChildren(); $("paper").style.opacity = "0"; $("outline").hidden = true;
+      void exposureCaption(track, photo);
+      shutter.classList.add("pressed"); setTimeout(function () { shutter.classList.remove("pressed"); },TIME.press);
+      void animate($("flash"),[{opacity:0},{opacity:.85,offset:.5},{opacity:0}],TIME.flash);
+      try { shutterSound(); } catch {}
+      await shrinkPhoto(photo); await framePhoto();
+    } catch { toast("Could not capture photo"); }
+    finally { capturing = false; updateLocks(); }
+  }
+  function openLightbox(photo, trigger) {
+    if (!photo || capturing || switching) return;
+    selected = photo; lightTrigger = trigger;
+    const copy = document.createElement("canvas"); copy.width = photo.canvas.width; copy.height = photo.canvas.height; copy.getContext("2d").drawImage(photo.canvas,0,0);
+    copy.setAttribute("role","img"); copy.setAttribute("aria-label", "Photo captured "+timeCaption(photo.date));
+    $("light-photo").replaceChildren(copy); setCaption($("light-caption"),photo.lines);
+    lightbox.showModal(); $("close-lightbox").focus();
+  }
+  function closeLightbox() { lightbox.close(); }
+  function downloadPhoto() {
+    const photo = selected; if (!photo) return;
+    photo.canvas.toBlob(function (blob) {
+      if (!blob) { toast("Could not download photo"); return; }
+      const url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = fileName(photo.date); document.body.append(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); },TIME.toast);
+    },"image/png");
+  }
+  document.addEventListener("pointerdown",initializeAudio,{capture:true});
+  document.addEventListener("keydown",function (event) {
+    initializeAudio();
+    if (event.code === "Space" && !lightbox.open && menu.hidden && $("error").hidden && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      if (event.target.closest("button") && event.target !== shutter) return;
+      event.preventDefault(); if (!event.repeat) void capture();
+    }
+    if (event.key === "Escape" && !menu.hidden) { closeMenu(); flip.focus(); }
+  });
+  shutter.addEventListener("click",capture);
+  flip.addEventListener("pointerdown",function (event) {
+    if (event.button !== 0 || flip.disabled) return;
+    held = false; clearTimeout(holdTimer); flip.setPointerCapture(event.pointerId);
+    holdTimer = setTimeout(function () { held = true; toggleMenu(); },TIME.hold);
+  });
+  function clearHold() { clearTimeout(holdTimer); }
+  flip.addEventListener("pointerup",clearHold); flip.addEventListener("pointercancel",clearHold); flip.addEventListener("lostpointercapture",clearHold);
+  flip.addEventListener("contextmenu",function (event) { event.preventDefault(); });
+  flip.addEventListener("click",function () { if (held) { held = false; return; } flipCamera(); });
+  chooser.addEventListener("click",toggleMenu);
+  menu.addEventListener("keydown",function (event) {
+    const buttons = Array.from(menu.children), index = buttons.indexOf(document.activeElement);
+    if (["ArrowDown","ArrowUp","Home","End"].includes(event.key)) {
+      event.preventDefault(); const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length-1 : (index+(event.key === "ArrowDown" ? 1 : -1)+buttons.length)%buttons.length; buttons[next]?.focus();
+    } else if (event.key === "Tab") closeMenu();
+  });
+  document.addEventListener("pointerdown",function (event) { if (!event.target.closest("#camera-controls")) closeMenu(); });
+  $("retry").addEventListener("click",restartCamera);
+  $("main-photo").addEventListener("click",function () { openLightbox(current,$("main-photo")); });
+  $("close-lightbox").addEventListener("click",closeLightbox);
+  lightbox.addEventListener("click",function (event) { if (event.target === lightbox || event.target === $("light-content")) closeLightbox(); });
+  lightbox.addEventListener("close",function () { selected = null; $("light-photo").replaceChildren(); lightTrigger?.focus(); });
+  $("download").addEventListener("click",downloadPhoto);
+  video.addEventListener("loadeddata",updateLocks);
+  document.addEventListener("visibilitychange",function () {
+    if (document.hidden) { ++request; stopTracks(stream); stream = null; video.srcObject = null; switching = false; closeMenu(); updateLocks(); }
+    else void restartCamera();
+  });
+  window.addEventListener("pagehide",function () { ++request; stopTracks(stream); stream = null; });
+  window.addEventListener("pageshow",function (event) { if (event.persisted && !document.hidden) void restartCamera(); });
+  window.addEventListener("resize",function () { if (current && !capturing) { layoutPhoto(current); fitPaper(); } });
+  navigator.mediaDevices?.addEventListener("devicechange",refreshDevices);
+  console.assert(bezier(0) === 0 && bezier(1) === 1 && bezier(.7) > 1,"Shrink easing must overshoot and settle");
+  console.assert(fileName(new Date(2026,10,17,14,57,3)) === "photo-20261117-145703.png","Capture filename must use local capture time");
+  void resolveDeviceName(); if (!document.hidden) void restartCamera();
+})();
+</script>
+</body>
+</html>
